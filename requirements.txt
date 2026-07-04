@@ -1,0 +1,10 @@
+torch
+torchvision
+albumentations>=1.4.0
+streamlit
+numpy
+pandas
+opencv-python
+scikit-learn
+matplotlib
+pillow

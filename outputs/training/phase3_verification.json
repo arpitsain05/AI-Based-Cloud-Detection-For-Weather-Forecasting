@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-07-08 12:41:14",
+  "device": "cpu",
+  "amp_enabled": false,
+  "model_name": "efficientnet_b0",
+  "num_classes": 5,
+  "classes": [
+    "cloudy",
+    "cyclone",
+    "rainy",
+    "shine",
+    "sunrise"
+  ],
+  "train_images": 909,
+  "val_images": 193,
+  "test_images": 201,
+  "batch_image_shape": [
+    32,
+    3,
+    224,
+    224
+  ],
+  "batch_label_shape": [
+    32
+  ],
+  "forward_output_shape": [
+    32,
+    5
+  ],
+  "verification_loss": 1.6191325187683105,
+  "checkpoint_saved": true,
+  "checkpoint_path": "C:\\Users\\arpit\\Downloads\\IMD Code\\outputs\\training\\phase3_verification_checkpoint.pth",
+  "total_parameters": 4013953,
+  "trainable_parameters": 4013953
+}

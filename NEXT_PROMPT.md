@@ -1,20 +1,29 @@
 # Next Prompt
 
-Continue this existing project only after the user confirms Phase 3.
+Continue this existing project only after the user confirms full model training.
 
-Project: AI-Based Weather Detection using Image Processing
+Project: AI-Based Weather Detection using Deep Learning
 
 Current status:
-- Phase 1 complete.
-- Phase 2 complete as of 2026-07-08 11:56:45.
-- Real classes: cloudy, cyclone, rainy, shine, sunrise
-- Existing processed split is valid and should be reused.
-- EDA artifacts are in `data/processed/eda/`.
-- No corrupted image files were deleted automatically.
 
-Before Phase 3:
-1. Read `PHASE2_REPORT.md`.
+- Phase 1 complete.
+- Phase 2 complete.
+- Phase 3 implementation complete.
+- Full training has not been started.
+- Processed dataset contains 1303 DataLoader-visible images.
+- EfficientNet-B0 with ImageNet pretrained weights has been verified.
+- One mini-batch training step completed successfully.
+- Verification artifacts are under `outputs/training/`.
+
+Before starting full training:
+
+1. Read `PHASE3_REPORT.md`.
 2. Read `PROJECT_STATUS.md`.
-3. Inspect `src/config.py`, `src/dataset.py`, and `src/analyze_and_split.py`.
-4. Do not recreate Phase 1 or Phase 2 files.
-5. Wait for explicit user confirmation before starting model training work.
+3. Inspect `src/model.py`, `src/train.py`, `src/evaluate.py`, and `src/utils.py`.
+4. Confirm whether to run:
+
+```powershell
+.\venv\Scripts\python.exe src\train.py
+```
+
+5. Do not start Phase 4 until training metrics and saved outputs are reviewed.

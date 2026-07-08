@@ -10,27 +10,26 @@ MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 # Class Definitions
 CLASSES = [
-    "Clear Sky",
-    "Cloudy",
-    "Rain Thunderstorm",
-    "Cyclone",
-    "Fog",
-    "Snow"
+    "cloudy",
+    "cyclone",
+    "rainy",
+    "shine",
+    "sunrise"
 ]
 NUM_CLASSES = len(CLASSES)
 
 # Image Configurations
 IMAGE_SIZE = 224  # Standard size for EfficientNet-B0/ResNet-50
-# ImageNet normalization statistics (standard for pre-trained torchvision models)
-NORM_MEAN = [0.485, 0.456, 0.406]
-NORM_STD = [0.229, 0.224, 0.225]
+# Calculated custom dataset normalization statistics (mean and std of training set)
+NORM_MEAN = [0.4611, 0.4577, 0.4499]
+NORM_STD = [0.2748, 0.2562, 0.2911]
 
 # Hyperparameters
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-4
 WEIGHT_DECAY = 1e-5
 EPOCHS = 15
-NUM_WORKERS = 4  # Set to 0 on Windows if you experience multi-processing issues
+NUM_WORKERS = 0  # Set to 0 on Windows to prevent multi-processing issues
 
 # Training Checkpoints
 MODEL_NAME = "efficientnet_b0"  # Options: 'efficientnet_b0', 'resnet50'

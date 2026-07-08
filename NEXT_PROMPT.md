@@ -1,26 +1,22 @@
 # Next Prompt
 
-Continue this existing project only after the user confirms Phase 4.
+Continue this existing project only after the user confirms Phase 5.
 
-Project: AI-Based Weather Detection using Deep Learning
+Project: AI Cloud Detection IMD
 
 Current status:
 
 - Phase 1 complete.
 - Phase 2 complete.
 - Phase 3 implementation complete.
-- Phase 3.5 full training and best-checkpoint evaluation complete.
-- Best model: `models/best_model.pth`
-- Last checkpoint: `models/last_checkpoint.pth`
-- Test accuracy: `0.9900497512437811`
-- Precision: `0.9905351292318894`
-- Recall: `0.9900497512437811`
-- F1 score: `0.9901266783531701`
+- Phase 3.5 full training and evaluation complete.
+- Phase 4 inference pipeline complete.
+- Phase 5 has not been started.
 
-Before Phase 4:
+Before Phase 5:
 
-1. Read `PHASE3_5_REPORT.md`.
-2. Review `outputs/training/metrics.json`.
-3. Review `outputs/training/confusion_matrix.png`.
-4. Decide whether Phase 4 should focus on deployment, Streamlit app integration, model explainability, or further training improvements.
-5. Do not modify the dataset unless explicitly requested.
+1. Read `PHASE4_REPORT.md`.
+2. Review `src/inference.py`.
+3. Decide whether Phase 5 should implement a Streamlit dashboard or another deployment surface.
+4. Do not modify the dataset unless explicitly requested.
+5. Do not retrain the model unless explicitly approved.

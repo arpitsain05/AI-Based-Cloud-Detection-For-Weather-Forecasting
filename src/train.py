@@ -169,12 +169,14 @@ def run_training(args):
 
     start_epoch = 0
     best_val_loss = float("inf")
+    best_val_accuracy = 0.0
     history = {"train_loss": [], "val_loss": [], "train_accuracy": [], "val_accuracy": []}
 
     if args.resume:
         checkpoint = load_checkpoint(args.resume, model, optimizer, scheduler, map_location=device)
         start_epoch = checkpoint.get("epoch", -1) + 1
         best_val_loss = checkpoint.get("best_val_loss", best_val_loss)
+        best_val_accuracy = checkpoint.get("best_val_accuracy", best_val_accuracy)
         history = checkpoint.get("metrics", {}).get("history", history)
         print(f"Resumed from checkpoint: {args.resume} at epoch {start_epoch}")
 
@@ -226,6 +228,9 @@ def run_training(args):
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
+
+        if val_accuracy > best_val_accuracy:
+            best_val_accuracy = val_accuracy
             save_checkpoint(
                 BEST_MODEL_PATH,
                 model,
@@ -240,7 +245,8 @@ def run_training(args):
         print(
             f"Epoch {epoch + 1}/{args.epochs} "
             f"train_loss={train_loss:.4f} val_loss={val_loss:.4f} "
-            f"train_acc={train_accuracy:.4f} val_acc={val_accuracy:.4f}"
+            f"train_acc={train_accuracy:.4f} val_acc={val_accuracy:.4f} "
+            f"lr={optimizer.param_groups[0]['lr']:.6g}"
         )
 
         if early_stopping.step(val_loss):

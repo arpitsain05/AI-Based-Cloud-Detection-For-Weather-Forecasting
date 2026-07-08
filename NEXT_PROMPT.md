@@ -1,6 +1,6 @@
 # Next Prompt
 
-Continue this existing project only after the user confirms full model training.
+Continue this existing project only after the user confirms Phase 4.
 
 Project: AI-Based Weather Detection using Deep Learning
 
@@ -9,21 +9,18 @@ Current status:
 - Phase 1 complete.
 - Phase 2 complete.
 - Phase 3 implementation complete.
-- Full training has not been started.
-- Processed dataset contains 1303 DataLoader-visible images.
-- EfficientNet-B0 with ImageNet pretrained weights has been verified.
-- One mini-batch training step completed successfully.
-- Verification artifacts are under `outputs/training/`.
+- Phase 3.5 full training and best-checkpoint evaluation complete.
+- Best model: `models/best_model.pth`
+- Last checkpoint: `models/last_checkpoint.pth`
+- Test accuracy: `0.9900497512437811`
+- Precision: `0.9905351292318894`
+- Recall: `0.9900497512437811`
+- F1 score: `0.9901266783531701`
 
-Before starting full training:
+Before Phase 4:
 
-1. Read `PHASE3_REPORT.md`.
-2. Read `PROJECT_STATUS.md`.
-3. Inspect `src/model.py`, `src/train.py`, `src/evaluate.py`, and `src/utils.py`.
-4. Confirm whether to run:
-
-```powershell
-.\venv\Scripts\python.exe src\train.py
-```
-
-5. Do not start Phase 4 until training metrics and saved outputs are reviewed.
+1. Read `PHASE3_5_REPORT.md`.
+2. Review `outputs/training/metrics.json`.
+3. Review `outputs/training/confusion_matrix.png`.
+4. Decide whether Phase 4 should focus on deployment, Streamlit app integration, model explainability, or further training improvements.
+5. Do not modify the dataset unless explicitly requested.

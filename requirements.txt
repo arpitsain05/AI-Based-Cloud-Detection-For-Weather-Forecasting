@@ -8,3 +8,4 @@ opencv-python
 scikit-learn
 matplotlib
 pillow
+tensorboard

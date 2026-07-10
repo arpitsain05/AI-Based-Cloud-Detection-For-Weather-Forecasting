@@ -15,8 +15,8 @@ env/
 # Data and Model weights
 # We ignore raw and processed data since they are too large for Git
 data/
-models/*.pth
-models/*.pt
+#models/*.pth
+#models/*.pt
 
 # OS files
 .DS_Store

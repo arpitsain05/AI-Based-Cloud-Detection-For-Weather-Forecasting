@@ -1,0 +1,116 @@
+/* ---------- Main Background ---------- */
+
+.stApp{
+    background:linear-gradient(135deg,#081b29,#0e3c5d,#114b7a);
+    color:white;
+}
+
+/* Hide Streamlit Header */
+
+header{
+    visibility:hidden;
+}
+
+footer{
+    visibility:hidden;
+}
+
+/* ---------- Hero ---------- */
+
+.hero{
+
+padding:35px;
+
+border-radius:25px;
+
+background:rgba(255,255,255,.08);
+
+backdrop-filter:blur(20px);
+
+border:1px solid rgba(255,255,255,.2);
+
+box-shadow:0 10px 30px rgba(0,0,0,.35);
+
+text-align:center;
+
+margin-bottom:25px;
+
+}
+
+.hero h1{
+
+font-size:50px;
+
+font-weight:bold;
+
+color:white;
+
+}
+
+.hero p{
+
+font-size:20px;
+
+color:#dceeff;
+
+}
+
+/* Cards */
+
+.card{
+
+padding:20px;
+
+background:rgba(255,255,255,.07);
+
+border-radius:20px;
+
+backdrop-filter:blur(15px);
+
+border:1px solid rgba(255,255,255,.15);
+
+box-shadow:0 8px 20px rgba(0,0,0,.25);
+
+margin-top:15px;
+
+}
+
+/* Button */
+
+.stButton>button{
+
+width:100%;
+
+height:55px;
+
+font-size:20px;
+
+border-radius:15px;
+
+background:#00B4DB;
+
+background:linear-gradient(to right,#00B4DB,#0083B0);
+
+color:white;
+
+border:none;
+
+}
+
+.stButton>button:hover{
+
+background:#2193b0;
+
+}
+
+/* Upload */
+
+[data-testid="stFileUploader"]{
+
+padding:20px;
+
+border-radius:20px;
+
+background:rgba(255,255,255,.05);
+
+}

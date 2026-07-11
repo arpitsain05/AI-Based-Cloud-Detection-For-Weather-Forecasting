@@ -34,7 +34,7 @@ The dashboard provides real-time predictions, per-class confidence distributions
 ## 📁 Project Structure
 
 ```
-C:\Users\arpit\Downloads\IMD Code\
+IMD Code\
 ├── app/
 │   ├── app.py                      # Main entry point for the Streamlit dashboard (includes custom UI, CSS styling, and Grad-CAM)
 │   └── assets/                     # UI assets including weather illustrations and background hero image

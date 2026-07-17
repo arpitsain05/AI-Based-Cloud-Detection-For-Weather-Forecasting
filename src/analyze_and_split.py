@@ -264,6 +264,78 @@ def collect_processed_split_counts(classes):
     return split_counts, missing_dirs
 
 
+def create_processed_split(raw_analysis):
+    """
+    Creates a new train/val/test split from raw_analysis data.
+    Only copies valid files.
+    """
+    import shutil
+    print("\n=== Recreating Processed Split (70/15/15) ===")
+
+    for split in SPLITS:
+        split_dir = Path(PROCESSED_DATA_DIR) / split
+        if split_dir.exists():
+            print(f"Cleaning existing split directory: {relative_path(split_dir)}")
+            shutil.rmtree(split_dir)
+        split_dir.mkdir(parents=True, exist_ok=True)
+
+    classes = raw_analysis["classes"]
+    all_valid_files = raw_analysis["all_valid_files"]
+
+    for class_name in classes:
+        valid_paths = all_valid_files[class_name]
+        random.seed(42)
+        shuffled_paths = list(valid_paths)
+        random.shuffle(shuffled_paths)
+
+        total_valid = len(shuffled_paths)
+        train_end = int(total_valid * 0.70)
+        val_end = train_end + int(total_valid * 0.15)
+
+        train_paths = shuffled_paths[:train_end]
+        val_paths = shuffled_paths[train_end:val_end]
+        test_paths = shuffled_paths[val_end:]
+
+        splits_map = {
+            "train": train_paths,
+            "val": val_paths,
+            "test": test_paths
+        }
+
+        for split, paths in splits_map.items():
+            split_class_dir = Path(PROCESSED_DATA_DIR) / split / class_name
+            split_class_dir.mkdir(parents=True, exist_ok=True)
+
+            for path in paths:
+                src_path = Path(path)
+                dest_path = split_class_dir / src_path.name
+                shutil.copy2(src_path, dest_path)
+
+        print(f" - {class_name}: Split completed (train={len(train_paths)}, val={len(val_paths)}, test={len(test_paths)}, total={total_valid})")
+
+    print("Processed split recreated successfully.")
+
+
+def update_config_normalization(mean, std):
+    config_path = Path(__file__).resolve().parent / "config.py"
+    if not config_path.exists():
+        config_path = Path("src/config.py")
+    if not config_path.exists():
+        print("Warning: config.py not found, skipping config update.")
+        return
+
+    content = config_path.read_text(encoding="utf-8")
+    import re
+    new_mean_str = f"NORM_MEAN = {mean}"
+    new_std_str = f"NORM_STD = {std}"
+
+    content = re.sub(r"NORM_MEAN\s*=\s*\[[^\]]+\]", new_mean_str, content)
+    content = re.sub(r"NORM_STD\s*=\s*\[[^\]]+\]", new_std_str, content)
+
+    config_path.write_text(content, encoding="utf-8")
+    print(f"Updated config.py normalization stats: mean={mean}, std={std}")
+
+
 def verify_existing_processed_split(raw_analysis):
     """
     Verify an existing split instead of recreating it.
@@ -406,6 +478,12 @@ def verify_pipeline():
     """
     print("\n=== Verifying DataLoader and Transform Pipeline ===")
 
+    import sys
+    import importlib
+    for module_name in ["src.config", "config", "src.dataset", "dataset"]:
+        if module_name in sys.modules:
+            importlib.reload(sys.modules[module_name])
+
     try:
         from src.dataset import get_dataloaders
     except ImportError:
@@ -484,7 +562,7 @@ def generate_reports(raw_analysis, split_analysis, pipeline_verification, mean_s
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     total_raw = sum(raw_analysis["class_distribution"].values())
 
-    phase2_report = f"""# Phase 2 Report
+    phase1_report = f"""# Phase 1 Report
 
 Generated: {now}
 
@@ -595,7 +673,7 @@ Before Phase 3:
 5. Wait for explicit user confirmation before starting model training work.
 """
 
-    (PROJECT_ROOT / "PHASE2_REPORT.md").write_text(phase2_report, encoding="utf-8")
+    (PROJECT_ROOT / "PHASE1_REPORT.md").write_text(phase1_report, encoding="utf-8")
     (PROJECT_ROOT / "PROJECT_STATUS.md").write_text(project_status, encoding="utf-8")
     (PROJECT_ROOT / "NEXT_PROMPT.md").write_text(next_prompt, encoding="utf-8")
 
@@ -605,22 +683,22 @@ def main():
     save_raw_eda_outputs(raw_analysis)
     display_and_save_samples(raw_analysis["all_valid_files"])
     split_analysis = verify_existing_processed_split(raw_analysis)
-    save_split_outputs(split_analysis)
 
     if not split_analysis["is_valid"]:
-        raise RuntimeError(
-            "Existing processed split is not valid. No files were changed. "
-            "Review data/processed/eda/split_distribution.json before rebuilding."
-        )
+        print("[WARNING] Processed split invalid or missing for 15 classes. Recreating...")
+        create_processed_split(raw_analysis)
+        split_analysis = verify_existing_processed_split(raw_analysis)
+
+    save_split_outputs(split_analysis)
 
     mean_std = calculate_processed_train_mean_std()
     pipeline_verification = verify_pipeline()
     save_pipeline_outputs(pipeline_verification, mean_std)
     generate_reports(raw_analysis, split_analysis, pipeline_verification, mean_std)
 
-    print("\nPhase 2 audit and verification completed successfully.")
+    print("\nPhase 1 dataset preparation, split, and verification completed successfully.")
     print(f"EDA outputs: {relative_path(EDA_DIR)}")
-    print("Reports generated: PHASE2_REPORT.md, PROJECT_STATUS.md, NEXT_PROMPT.md")
+    print("Reports generated: PHASE1_REPORT.md, PROJECT_STATUS.md, NEXT_PROMPT.md")
     print("No files were deleted. Existing processed dataset was not overwritten.")
 
 

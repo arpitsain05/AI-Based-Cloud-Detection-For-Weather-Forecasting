@@ -1,23 +1,20 @@
 # Next Prompt
 
-Continue this existing project only after the user confirms Phase 6.
+Continue this existing project only after the user confirms Phase 3.
 
-Project: AI Cloud Detection IMD
+Project: AI-Based Weather Detection using Image Processing
 
 Current status:
-
 - Phase 1 complete.
-- Phase 2 complete.
-- Phase 3 implementation complete.
-- Phase 3.5 full training and evaluation complete.
-- Phase 4 inference pipeline complete.
-- Phase 5 Streamlit dashboard complete.
-- Phase 6 has not been started.
+- Phase 2 complete as of 2026-07-17 18:06:28.
+- Real classes: cloudy, cyclone, dew, foggy, frost, glaze, hail, lightning, rainbow, rainy, rime, sandstorm, shine, snow, sunrise
+- Existing processed split is valid and should be reused.
+- EDA artifacts are in `data/processed/eda/`.
+- No corrupted image files were deleted automatically.
 
-Before Phase 6:
-
-1. Read `PHASE5_REPORT.md`.
-2. Review `app/app.py`.
-3. Decide whether Phase 6 should focus on packaging, deployment hardening, or user-facing refinements.
-4. Do not modify the dataset unless explicitly requested.
-5. Do not retrain the model unless explicitly approved.
+Before Phase 3:
+1. Read `PHASE2_REPORT.md`.
+2. Read `PROJECT_STATUS.md`.
+3. Inspect `src/config.py`, `src/dataset.py`, and `src/analyze_and_split.py`.
+4. Do not recreate Phase 1 or Phase 2 files.
+5. Wait for explicit user confirmation before starting model training work.

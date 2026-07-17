@@ -1,41 +1,29 @@
 # Project Status
 
-Generated: 2026-07-08
+Generated: 2026-07-17 18:06:28
 
 ## Current Phase
 
-Phase 5 Streamlit dashboard implementation is complete. Phase 6 has not been started.
+Phase 2 is complete. Phase 3 has not been started.
 
 ## Completed
 
 - Phase 1 project structure and dataset utilities are present.
-- Phase 2 dataset analysis, processed split verification, and DataLoader verification are complete.
-- Phase 3 model architecture and training pipeline implementation is complete.
-- Phase 3.5 full training and best-checkpoint evaluation are complete.
-- Phase 4 inference pipeline is complete.
-- Phase 5 Streamlit dashboard is complete.
+- Real dataset classes were detected and counted.
+- Existing processed train/validation/test split was verified instead of recreated.
+- EDA outputs were saved under `data/processed/eda/`.
+- Corrupted image detection now reports files without deleting them.
+- PyTorch DataLoader and Albumentations transforms were verified.
 
-## Dataset and Model
+## Current Dataset
 
-- Classes: `cloudy`, `cyclone`, `rainy`, `shine`, `sunrise`
-- Best model checkpoint: `models/best_model.pth`
-- Dashboard entry point: `app/app.py`
+- Classes: `cloudy, cyclone, dew, foggy, frost, glaze, hail, lightning, rainbow, rainy, rime, sandstorm, shine, snow, sunrise`
+- Total valid raw images: `8604`
+- Processed split valid: `True`
+- Corrupted/unreadable images requiring review: `0`
 
-## Phase 5 Result
+## Important Safety Notes
 
-- Upload-to-prediction flow verified
-- Predicted class on verification sample: `cloudy`
-- Confidence on verification sample: `0.9997155070304871`
-- Grad-CAM heatmap and overlay verified
-- Streamlit version used in verification: `1.58.0`
-
-## Key Artifact
-
-- Phase 5 report: `PHASE5_REPORT.md`
-
-## Important Notes
-
-- Training pipeline was not modified.
-- Dataset was not modified.
-- Model checkpoint was not retrained or overwritten.
-- Do not start Phase 6 until the user explicitly confirms.
+- Do not start Phase 3 until confirmed by the user.
+- Do not delete reported corrupted files without explicit user confirmation.
+- Do not recreate `data/processed/` while the current split remains valid.

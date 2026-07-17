@@ -12,8 +12,18 @@ MODELS_DIR = os.path.join(BASE_DIR, "models")
 CLASSES = [
     "cloudy",
     "cyclone",
+    "dew",
+    "foggy",
+    "frost",
+    "glaze",
+    "hail",
+    "lightning",
+    "rainbow",
     "rainy",
+    "rime",
+    "sandstorm",
     "shine",
+    "snow",
     "sunrise"
 ]
 NUM_CLASSES = len(CLASSES)
@@ -21,8 +31,8 @@ NUM_CLASSES = len(CLASSES)
 # Image Configurations
 IMAGE_SIZE = 224  # Standard size for EfficientNet-B0/ResNet-50
 # Calculated custom dataset normalization statistics (mean and std of training set)
-NORM_MEAN = [0.4611, 0.4577, 0.4499]
-NORM_STD = [0.2748, 0.2562, 0.2911]
+NORM_MEAN = [0.5078, 0.5134, 0.4963]
+NORM_STD = [0.2585, 0.2463, 0.2799]
 
 # Hyperparameters
 BATCH_SIZE = 32

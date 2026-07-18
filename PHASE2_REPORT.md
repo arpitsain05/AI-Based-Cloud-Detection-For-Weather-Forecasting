@@ -1,68 +1,104 @@
-# Phase 2 Report
+# Phase 2A Report: EfficientNet-B0 Retraining on 15-Class Weather Dataset
 
-Generated: 2026-07-08 11:56:45
+Generated: 2026-07-18
 
-## Scope
+## 📋 Training Configuration
 
-Phase 2 analyzed the real dataset, verified the existing processed split, saved EDA artifacts, checked corrupted/unreadable images without deleting files, and validated the PyTorch DataLoader/transform pipeline.
+* **Model Backbone**: `EfficientNet-B0` (Pretrained on ImageNet)
+* **Custom Head**: Fully-connected classification head mapping to `15` classes.
+* **Input Image Size**: `224x224` pixels
+* **Optimization Setup**:
+  * **Optimizer**: `AdamW` (learning rate = `1e-4`, weight decay = `1e-5`)
+  * **Scheduler**: `ReduceLROnPlateau` (mode = `min`, factor = `0.5`, patience = `2`)
+* **Early Stopping**: Patience = `5` epochs
+* **Device**: `cuda` (NVIDIA GeForce RTX 3050 Laptop GPU)
+* **AMP (Automatic Mixed Precision)**: Enabled
 
-## Raw Dataset
+---
 
-- Raw data directory: `data\raw`
-- Detected classes: `cloudy, cyclone, rainy, shine, sunrise`
-- Total valid images: `1305`
-- Corrupted/unreadable images reported: `0`
-- Skipped non-image files: `1`
+## ⏱️ Early Stopping & Epoch Progression
 
-| class | valid_images |
-| --- | --- |
-| cloudy | 336 |
-| cyclone | 144 |
-| rainy | 215 |
-| shine | 253 |
-| sunrise | 357 |
+The model training was completed in **11 epochs** when early stopping was triggered. The validation loss and accuracy progressed as follows:
 
-## Processed Split Verification
+* **Epoch 1**: train_loss = `1.4165`, val_loss = `0.4486`, train_acc = `63.80%`, val_acc = `87.69%` (Saved best checkpoint)
+* **Epoch 2**: train_loss = `0.5145`, val_loss = `0.2992`, train_acc = `84.47%`, val_acc = `90.72%` (Saved best checkpoint)
+* **Epoch 3**: train_loss = `0.3892`, val_loss = `0.2527`, train_acc = `87.73%`, val_acc = `91.82%` (Saved best checkpoint)
+* **Epoch 4**: train_loss = `0.3147`, val_loss = `0.2431`, train_acc = `89.72%`, val_acc = `92.13%` (Saved best checkpoint)
+* **Epoch 5**: train_loss = `0.2690`, val_loss = `0.2295`, train_acc = `91.03%`, val_acc = `92.13%` (Saved best checkpoint)
+* **Epoch 6**: train_loss = `0.2364`, val_loss = `0.2144`, train_acc = `92.42%`, val_acc = `93.53%` (Saved best checkpoint)
+* **Epoch 7**: train_loss = `0.2150`, val_loss = `0.2239`, train_acc = `92.92%`, val_acc = `92.36%` 
+* **Epoch 8**: train_loss = `0.1949`, val_loss = `0.2192`, train_acc = `93.90%`, val_acc = `92.60%`
+* **Epoch 9**: train_loss = `0.1618`, val_loss = `0.2272`, train_acc = `94.70%`, val_acc = `92.67%`
+* **Epoch 10**: train_loss = `0.1519`, val_loss = `0.2149`, train_acc = `95.11%`, val_acc = `93.22%`
+* **Epoch 11**: train_loss = `0.1343`, val_loss = `0.2337`, train_acc = `95.61%`, val_acc = `92.52%` (Early stopping triggered)
 
-- Processed data directory: `data\processed`
-- Existing split reused: `True`
-- Existing split valid: `True`
-- Split was not recreated or overwritten.
+### 🏆 Best Validation Metrics (Epoch 6)
+* **Validation Loss**: `0.2144`
+* **Validation Accuracy**: `93.53%`
 
-| class | raw_total | train | val | test | is_valid |
-| --- | --- | --- | --- | --- | --- |
-| cloudy | 336 | 235 | 50 | 51 | True |
-| cyclone | 144 | 100 | 21 | 23 | True |
-| rainy | 215 | 150 | 32 | 33 | True |
-| shine | 253 | 177 | 37 | 39 | True |
-| sunrise | 357 | 249 | 53 | 55 | True |
+---
 
-## Transform and DataLoader Verification
+## 🧠 Model Checkpoint Filenames
 
-- Image size: `224x224`
-- Batch size: `32`
-- Config normalization mean: `[0.4611, 0.4577, 0.4499]`
-- Config normalization std: `[0.2748, 0.2562, 0.2911]`
-- Recomputed train mean: `[0.4611, 0.4577, 0.4499]`
-- Recomputed train std: `[0.2748, 0.2562, 0.2911]`
-- Pipeline verified: `True`
+* **Best Model Weights**: `models/efficientnet_b0_15class_best.pth`
+* **Last Training Checkpoint**: `models/efficientnet_b0_15class_last.pth`
+* *Note: The old 5-class model files (`best_model.pth` and `last_checkpoint.pth`) were preserved.*
 
-## EDA Outputs
+---
 
-Saved under `data/processed/eda/`:
+## 📈 Training Graphs Generated
 
-- `class_distribution.csv`
-- `class_distribution.json`
-- `corrupted_images.csv`
-- `corrupted_images.json`
-- `skipped_files.csv`
-- `image_dimensions.json`
-- `split_distribution.csv`
-- `split_distribution.json`
-- `pipeline_verification.json`
-- `train_normalization_stats.json`
-- `raw_sample_grid.png`
+Saved in `outputs/training/`:
+* `loss_curve.png`: Shows train vs validation loss convergence.
+* `accuracy_curve.png`: Shows train vs validation accuracy metrics.
 
-## File Safety
+---
 
-No files were deleted. No existing processed dataset files were overwritten.
+## 🧪 Test Set Evaluation Metrics (1,305 test images)
+
+Evaluated using the best model weights checkpoint (`models/efficientnet_b0_15class_best.pth`):
+
+| Metric | Weighted Average Value |
+| :--- | :---: |
+| **Test Loss** | `0.2267` |
+| **Accuracy** | `93.79%` |
+| **Precision** | `93.86%` |
+| **Recall** | `93.79%` |
+| **F1-Score** | `93.79%` |
+
+---
+
+## 📊 Classification Report Summary
+
+The class-wise evaluation details are summarized below:
+
+| Class | Precision | Recall | F1-Score | Support |
+| :--- | :---: | :---: | :---: | :---: |
+| **cloudy** | `0.935` | `0.983` | `0.959` | 59 |
+| **cyclone** | `1.000` | `1.000` | `1.000` | 22 |
+| **dew** | `0.980` | `0.943` | `0.962` | 106 |
+| **foggy** | `0.953` | `0.989` | `0.971` | 186 |
+| **frost** | `0.892` | `0.806` | `0.847` | 72 |
+| **glaze** | `0.835` | `0.835` | `0.835` | 97 |
+| **hail** | `0.978` | `0.978` | `0.978` | 90 |
+| **lightning** | `1.000` | `1.000` | `1.000` | 58 |
+| **rainbow** | `1.000` | `0.972` | `0.986` | 36 |
+| **rainy** | `0.972` | `0.920` | `0.945` | 112 |
+| **rime** | `0.890` | `0.925` | `0.907` | 174 |
+| **sandstorm** | `0.990` | `0.971` | `0.981` | 105 |
+| **shine** | `0.973` | `0.923` | `0.947` | 39 |
+| **snow** | `0.847` | `0.883` | `0.865` | 94 |
+| **sunrise** | `0.982` | `1.000` | `0.991` | 55 |
+
+---
+
+## 🎯 Confusion Matrix
+
+* Saved to: `outputs/training/confusion_matrix.png`
+* High confusion was primarily observed between ice-related classes like **rime**, **frost**, and **glaze**, which is typical given their extremely similar texture patterns in visual imagery. Distinct phenomena like **cyclone** and **lightning** were classified with **100% precision and recall**.
+
+---
+
+## 🏁 Final Conclusion
+
+The retraining of the `EfficientNet-B0` model on the expanded 15-class dataset was highly successful. The model achieved a **93.79% test accuracy**, representing extremely strong feature extraction capabilities. Generalization is excellent, particularly on complex visual conditions. The model checkpoints have been correctly saved in `models/` under the new naming convention, ensuring backwards compatibility with the original 5-class checkpoint.

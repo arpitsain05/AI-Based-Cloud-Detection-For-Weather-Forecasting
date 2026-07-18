@@ -1,19 +1,29 @@
 {
-  "timestamp": "2026-07-08 12:41:14",
-  "device": "cpu",
-  "amp_enabled": false,
+  "timestamp": "2026-07-18 10:51:09",
+  "device": "cuda",
+  "amp_enabled": true,
   "model_name": "efficientnet_b0",
-  "num_classes": 5,
+  "num_classes": 15,
   "classes": [
     "cloudy",
     "cyclone",
+    "dew",
+    "foggy",
+    "frost",
+    "glaze",
+    "hail",
+    "lightning",
+    "rainbow",
     "rainy",
+    "rime",
+    "sandstorm",
     "shine",
+    "snow",
     "sunrise"
   ],
-  "train_images": 909,
-  "val_images": 193,
-  "test_images": 201,
+  "train_images": 6014,
+  "val_images": 1283,
+  "test_images": 1305,
   "batch_image_shape": [
     32,
     3,
@@ -25,11 +35,11 @@
   ],
   "forward_output_shape": [
     32,
-    5
+    15
   ],
-  "verification_loss": 1.6191325187683105,
+  "verification_loss": 2.72491455078125,
   "checkpoint_saved": true,
   "checkpoint_path": "C:\\Users\\arpit\\Downloads\\IMD Code\\outputs\\training\\phase3_verification_checkpoint.pth",
-  "total_parameters": 4013953,
-  "trainable_parameters": 4013953
+  "total_parameters": 4026763,
+  "trainable_parameters": 4026763
 }

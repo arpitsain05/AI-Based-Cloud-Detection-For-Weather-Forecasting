@@ -84,6 +84,16 @@ LAST_CHECKPOINT_PATH = Path(MODELS_DIR) / "last_checkpoint.pth"
 TENSORBOARD_DIR = OUTPUT_DIR / "tensorboard"
 
 
+def setup_paths(args):
+    global OUTPUT_DIR, BEST_MODEL_PATH, LAST_CHECKPOINT_PATH, TENSORBOARD_DIR
+    suffix = f"_{args.model_name_suffix}" if args.model_name_suffix else ""
+    if args.output_dir:
+        OUTPUT_DIR = Path(args.output_dir)
+    BEST_MODEL_PATH = Path(MODELS_DIR) / f"{MODEL_NAME}{suffix}_best.pth"
+    LAST_CHECKPOINT_PATH = Path(MODELS_DIR) / f"{MODEL_NAME}{suffix}_last.pth"
+    TENSORBOARD_DIR = OUTPUT_DIR / "tensorboard"
+
+
 def create_dataloaders(batch_size=BATCH_SIZE, num_workers=NUM_WORKERS):
     train_dir = os.path.join(PROCESSED_DATA_DIR, "train")
     val_dir = os.path.join(PROCESSED_DATA_DIR, "val")
@@ -133,6 +143,7 @@ def train_one_epoch(model, data_loader, criterion, optimizer, device, scaler=Non
 
 
 def run_training(args):
+    setup_paths(args)
     set_seed(args.seed)
     ensure_dir(OUTPUT_DIR)
     ensure_dir(MODELS_DIR)
@@ -290,6 +301,7 @@ def run_training(args):
 
 
 def run_verification(args):
+    setup_paths(args)
     set_seed(args.seed)
     ensure_dir(OUTPUT_DIR)
     ensure_dir(MODELS_DIR)
@@ -389,6 +401,8 @@ def parse_args():
     parser.add_argument("--freeze-backbone", action="store_true")
     parser.add_argument("--disable-amp", action="store_true")
     parser.add_argument("--no-pretrained", action="store_true")
+    parser.add_argument("--model-name-suffix", type=str, default="15class", help="Suffix for checkpoint files.")
+    parser.add_argument("--output-dir", type=str, default=None, help="Directory to save training logs and graphs.")
     return parser.parse_args()
 
 

@@ -1,10 +1,10 @@
 # Project Status
 
-Generated: 2026-07-17 18:06:28
+Generated: 2026-07-18 11:10:00
 
 ## Current Phase
 
-Phase 2 is complete. Phase 3 has not been started.
+Phase 2A (EfficientNet-B0 15-class training) is completed. Phase 2B (Swin Transformer training) is the next pending task.
 
 ## Completed
 
@@ -14,6 +14,7 @@ Phase 2 is complete. Phase 3 has not been started.
 - EDA outputs were saved under `data/processed/eda/`.
 - Corrupted image detection now reports files without deleting them.
 - PyTorch DataLoader and Albumentations transforms were verified.
+- Phase 2A: Retrained EfficientNet-B0 on the 15-class dataset on GPU (93.79% test accuracy).
 
 ## Current Dataset
 

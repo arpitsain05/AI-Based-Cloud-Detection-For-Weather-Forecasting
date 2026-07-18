@@ -1,104 +1,93 @@
-# Phase 2A Report: EfficientNet-B0 Retraining on 15-Class Weather Dataset
+# Phase 2 Report: Model Training & Evaluation (15-Class Weather Dataset)
 
 Generated: 2026-07-18
 
-## 📋 Training Configuration
+This phase documents the training and evaluation of two deep learning architectures on the expanded 15-class weather dataset.
 
+---
+
+## 🟢 Phase 2A: EfficientNet-B0 Retraining
+
+### 📋 Training Configuration
 * **Model Backbone**: `EfficientNet-B0` (Pretrained on ImageNet)
-* **Custom Head**: Fully-connected classification head mapping to `15` classes.
+* **Classifier Head**: Fully-connected layer mapping to `15` classes.
 * **Input Image Size**: `224x224` pixels
-* **Optimization Setup**:
-  * **Optimizer**: `AdamW` (learning rate = `1e-4`, weight decay = `1e-5`)
-  * **Scheduler**: `ReduceLROnPlateau` (mode = `min`, factor = `0.5`, patience = `2`)
+* **Optimizer**: `AdamW` (learning rate = `1e-4`, weight decay = `1e-5`)
+* **Scheduler**: `ReduceLROnPlateau` (mode = `min`, factor = `0.5`, patience = `2`)
 * **Early Stopping**: Patience = `5` epochs
 * **Device**: `cuda` (NVIDIA GeForce RTX 3050 Laptop GPU)
 * **AMP (Automatic Mixed Precision)**: Enabled
 
----
+### ⏱️ Training Progression
+Training ran for **11 epochs** before early stopping was triggered. The best checkpoint was saved at **Epoch 6**:
+* **Best Validation Loss**: `0.2144`
+* **Best Validation Accuracy**: `93.53%`
 
-## ⏱️ Early Stopping & Epoch Progression
-
-The model training was completed in **11 epochs** when early stopping was triggered. The validation loss and accuracy progressed as follows:
-
-* **Epoch 1**: train_loss = `1.4165`, val_loss = `0.4486`, train_acc = `63.80%`, val_acc = `87.69%` (Saved best checkpoint)
-* **Epoch 2**: train_loss = `0.5145`, val_loss = `0.2992`, train_acc = `84.47%`, val_acc = `90.72%` (Saved best checkpoint)
-* **Epoch 3**: train_loss = `0.3892`, val_loss = `0.2527`, train_acc = `87.73%`, val_acc = `91.82%` (Saved best checkpoint)
-* **Epoch 4**: train_loss = `0.3147`, val_loss = `0.2431`, train_acc = `89.72%`, val_acc = `92.13%` (Saved best checkpoint)
-* **Epoch 5**: train_loss = `0.2690`, val_loss = `0.2295`, train_acc = `91.03%`, val_acc = `92.13%` (Saved best checkpoint)
-* **Epoch 6**: train_loss = `0.2364`, val_loss = `0.2144`, train_acc = `92.42%`, val_acc = `93.53%` (Saved best checkpoint)
-* **Epoch 7**: train_loss = `0.2150`, val_loss = `0.2239`, train_acc = `92.92%`, val_acc = `92.36%` 
-* **Epoch 8**: train_loss = `0.1949`, val_loss = `0.2192`, train_acc = `93.90%`, val_acc = `92.60%`
-* **Epoch 9**: train_loss = `0.1618`, val_loss = `0.2272`, train_acc = `94.70%`, val_acc = `92.67%`
-* **Epoch 10**: train_loss = `0.1519`, val_loss = `0.2149`, train_acc = `95.11%`, val_acc = `93.22%`
-* **Epoch 11**: train_loss = `0.1343`, val_loss = `0.2337`, train_acc = `95.61%`, val_acc = `92.52%` (Early stopping triggered)
-
-### 🏆 Best Validation Metrics (Epoch 6)
-* **Validation Loss**: `0.2144`
-* **Validation Accuracy**: `93.53%`
+### 🧠 Model Checkpoints
+* **Best Checkpoint**: `models/efficientnet_b0_15class_best.pth`
+* **Last Checkpoint**: `models/efficientnet_b0_15class_last.pth`
 
 ---
 
-## 🧠 Model Checkpoint Filenames
+## 🔵 Phase 2B: Swin Transformer Training
 
-* **Best Model Weights**: `models/efficientnet_b0_15class_best.pth`
-* **Last Training Checkpoint**: `models/efficientnet_b0_15class_last.pth`
-* *Note: The old 5-class model files (`best_model.pth` and `last_checkpoint.pth`) were preserved.*
+### 📋 Training Configuration
+* **Model Backbone**: `Swin Transformer (swin_t)` (Pretrained on ImageNet)
+* **Classifier Head**: Replaced `model.head` with Dropout (`0.2`) and Linear mapping to `15` classes.
+* **Input Image Size**: `224x224` pixels
+* **Optimizer**: `AdamW` (learning rate = `1e-4`, weight decay = `1e-5`)
+* **Scheduler**: `ReduceLROnPlateau` (mode = `min`, factor = `0.5`, patience = `2`)
+* **Early Stopping**: Patience = `5` epochs
+* **Device**: `cuda` (NVIDIA GeForce RTX 3050 Laptop GPU)
+* **AMP (Automatic Mixed Precision)**: Enabled
 
----
+### ⏱️ Training Progression
+Training ran for **10 epochs** before early stopping was triggered. The best checkpoint was saved at **Epoch 5**:
+* **Best Validation Loss**: `0.1962`
+* **Best Validation Accuracy**: `93.61%`
 
-## 📈 Training Graphs Generated
-
-Saved in `outputs/training/`:
-* `loss_curve.png`: Shows train vs validation loss convergence.
-* `accuracy_curve.png`: Shows train vs validation accuracy metrics.
-
----
-
-## 🧪 Test Set Evaluation Metrics (1,305 test images)
-
-Evaluated using the best model weights checkpoint (`models/efficientnet_b0_15class_best.pth`):
-
-| Metric | Weighted Average Value |
-| :--- | :---: |
-| **Test Loss** | `0.2267` |
-| **Accuracy** | `93.79%` |
-| **Precision** | `93.86%` |
-| **Recall** | `93.79%` |
-| **F1-Score** | `93.79%` |
+### 🧠 Model Checkpoints
+* **Best Checkpoint**: `models/swin_transformer_15class_best.pth`
+* **Last Checkpoint**: `models/swin_transformer_15class_last.pth`
 
 ---
 
-## 📊 Classification Report Summary
+## 📊 Comprehensive Model Comparison
 
-The class-wise evaluation details are summarized below:
+Both models were evaluated on the independent **test split** consisting of 1,305 images:
 
-| Class | Precision | Recall | F1-Score | Support |
-| :--- | :---: | :---: | :---: | :---: |
-| **cloudy** | `0.935` | `0.983` | `0.959` | 59 |
-| **cyclone** | `1.000` | `1.000` | `1.000` | 22 |
-| **dew** | `0.980` | `0.943` | `0.962` | 106 |
-| **foggy** | `0.953` | `0.989` | `0.971` | 186 |
-| **frost** | `0.892` | `0.806` | `0.847` | 72 |
-| **glaze** | `0.835` | `0.835` | `0.835` | 97 |
-| **hail** | `0.978` | `0.978` | `0.978` | 90 |
-| **lightning** | `1.000` | `1.000` | `1.000` | 58 |
-| **rainbow** | `1.000` | `0.972` | `0.986` | 36 |
-| **rainy** | `0.972` | `0.920` | `0.945` | 112 |
-| **rime** | `0.890` | `0.925` | `0.907` | 174 |
-| **sandstorm** | `0.990` | `0.971` | `0.981` | 105 |
-| **shine** | `0.973` | `0.923` | `0.947` | 39 |
-| **snow** | `0.847` | `0.883` | `0.865` | 94 |
-| **sunrise** | `0.982` | `1.000` | `0.991` | 55 |
+| Metric / Dimension | 🟢 EfficientNet-B0 (Baseline) | 🔵 Swin Transformer | Difference |
+| :--- | :---: | :---: | :---: |
+| **Accuracy** | **`93.79%`** | `93.56%` | `-0.23%` |
+| **Precision (Weighted)** | **`93.86%`** | `93.64%` | `-0.22%` |
+| **Recall (Weighted)** | **`93.79%`** | `93.56%` | `-0.23%` |
+| **F1 Score (Weighted)** | **`93.79%`** | `93.58%` | `-0.21%` |
+| **Test Loss** | **`0.2267`** | `0.2332` | `+0.0065` |
+| **Parameters (Total/Trainable)**| **`4,026,763`** | `27,530,889` | ~6.8x larger |
+| **Model Weight Size** | **`46.56 MB`** | `315.51 MB` | ~6.8x larger |
+| **Inference Time (GPU)** | **`17.519 ms/image`** | `25.152 ms/image` | +43.5% slower |
+| **Training Time (GPU)** | **`~348 seconds (5.8m)`** | `1,213 seconds (20.2m)`| ~3.5x slower |
 
 ---
 
-## 🎯 Confusion Matrix
+## 🎯 Confusion Matrix & Error Analysis
 
-* Saved to: `outputs/training/confusion_matrix.png`
-* High confusion was primarily observed between ice-related classes like **rime**, **frost**, and **glaze**, which is typical given their extremely similar texture patterns in visual imagery. Distinct phenomena like **cyclone** and **lightning** were classified with **100% precision and recall**.
+* **EfficientNet-B0 Matrix**: Saved at `outputs/training/confusion_matrix.png`
+* **Swin Transformer Matrix**: Saved at `outputs/training/swin/confusion_matrix.png`
+* **Analysis**:
+  * Distinct meteorological phenomena like **cyclone** and **lightning** were classified with **100% precision and recall** by both models.
+  * Ice-related and snow-related classes (**rime**, **frost**, **glaze**, and **snow**) showed some mutual confusion due to highly similar visual textures. 
+  * Swin Transformer slightly improved classification accuracy on ice-textures (e.g., +1.04% F1-score on **frost** and +0.75% on **glaze**), but lost marginal ground on precipitation categories (e.g., -2.61% F1-score on **rainy**).
 
 ---
 
-## 🏁 Final Conclusion
+## 🏁 Final Conclusion & Model Selection
 
-The retraining of the `EfficientNet-B0` model on the expanded 15-class dataset was highly successful. The model achieved a **93.79% test accuracy**, representing extremely strong feature extraction capabilities. Generalization is excellent, particularly on complex visual conditions. The model checkpoints have been correctly saved in `models/` under the new naming convention, ensuring backwards compatibility with the original 5-class checkpoint.
+**EfficientNet-B0 is selected as the primary deployment model** for the weather forecasting system.
+
+### Rationale:
+1. **Performance**: EfficientNet-B0 achieves slightly better overall classification accuracy (`93.79%` vs `93.56%`).
+2. **Efficiency**:
+   * **Size**: It is significantly smaller (`46.56 MB` vs `315.51 MB`), which translates to lower deployment costs, smaller container sizes, and lower memory overhead.
+   * **Inference Speed**: It runs **43.5% faster** during inference (`17.52 ms` vs `25.15 ms`), making it much better suited for real-time applications and low-resource environments.
+   * **Training Speed**: It trains **3.5x faster**, facilitating easier model retraining and faster experiment cycles.

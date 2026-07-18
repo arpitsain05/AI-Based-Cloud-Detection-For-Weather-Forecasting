@@ -35,6 +35,12 @@ def build_efficientnet_b0(num_classes=NUM_CLASSES, pretrained=True, dropout=0.2,
     return model
 
 
+try:
+    from src.swin_model import build_swin_transformer
+except ImportError:
+    from swin_model import build_swin_transformer
+
+
 def build_model(
     model_name=MODEL_NAME,
     num_classes=NUM_CLASSES,
@@ -46,15 +52,22 @@ def build_model(
     Factory for supported model backbones.
     """
     normalized_name = model_name.lower()
-    if normalized_name != "efficientnet_b0":
-        raise ValueError(f"Unsupported model '{model_name}'. Supported: efficientnet_b0")
-
-    return build_efficientnet_b0(
-        num_classes=num_classes,
-        pretrained=pretrained,
-        dropout=dropout,
-        freeze_backbone=freeze_backbone,
-    )
+    if "swin" in normalized_name:
+        return build_swin_transformer(
+            num_classes=num_classes,
+            pretrained=pretrained,
+            dropout=dropout,
+            freeze_backbone=freeze_backbone,
+        )
+    elif normalized_name == "efficientnet_b0":
+        return build_efficientnet_b0(
+            num_classes=num_classes,
+            pretrained=pretrained,
+            dropout=dropout,
+            freeze_backbone=freeze_backbone,
+        )
+    else:
+        raise ValueError(f"Unsupported model '{model_name}'. Supported: efficientnet_b0, swin_transformer")
 
 
 def count_trainable_parameters(model):

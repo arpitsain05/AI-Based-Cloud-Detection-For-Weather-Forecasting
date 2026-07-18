@@ -89,8 +89,8 @@ def setup_paths(args):
     suffix = f"_{args.model_name_suffix}" if args.model_name_suffix else ""
     if args.output_dir:
         OUTPUT_DIR = Path(args.output_dir)
-    BEST_MODEL_PATH = Path(MODELS_DIR) / f"{MODEL_NAME}{suffix}_best.pth"
-    LAST_CHECKPOINT_PATH = Path(MODELS_DIR) / f"{MODEL_NAME}{suffix}_last.pth"
+    BEST_MODEL_PATH = Path(MODELS_DIR) / f"{args.model_name}{suffix}_best.pth"
+    LAST_CHECKPOINT_PATH = Path(MODELS_DIR) / f"{args.model_name}{suffix}_last.pth"
     TENSORBOARD_DIR = OUTPUT_DIR / "tensorboard"
 
 
@@ -159,7 +159,7 @@ def run_training(args):
     )
 
     model = build_model(
-        model_name=MODEL_NAME,
+        model_name=args.model_name,
         num_classes=NUM_CLASSES,
         pretrained=not args.no_pretrained,
         freeze_backbone=args.freeze_backbone,
@@ -287,10 +287,16 @@ def run_training(args):
     plot_training_curves(history, OUTPUT_DIR)
     plot_confusion_matrix(test_metrics["confusion_matrix"], CLASSES, OUTPUT_DIR / "confusion_matrix.png")
 
+    # Save classification report as text
+    from sklearn.metrics import classification_report as sk_classification_report
+    text_report = sk_classification_report(test_targets, test_predictions, target_names=CLASSES, zero_division=0)
+    with open(OUTPUT_DIR / "classification_report.txt", "w", encoding="utf-8") as f:
+        f.write(text_report)
+
     return {
         "device": str(device),
         "amp_enabled": use_amp,
-        "model_name": MODEL_NAME,
+        "model_name": args.model_name,
         "num_classes": NUM_CLASSES,
         "total_parameters": count_total_parameters(model),
         "trainable_parameters": count_trainable_parameters(model),
@@ -320,7 +326,7 @@ def run_verification(args):
     print(f"Test images: {len(test_loader.dataset)}")
 
     model = build_model(
-        model_name=MODEL_NAME,
+        model_name=args.model_name,
         num_classes=NUM_CLASSES,
         pretrained=not args.no_pretrained,
         freeze_backbone=args.freeze_backbone,
@@ -366,7 +372,7 @@ def run_verification(args):
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "device": str(device),
         "amp_enabled": use_amp,
-        "model_name": MODEL_NAME,
+        "model_name": args.model_name,
         "num_classes": NUM_CLASSES,
         "classes": CLASSES,
         "train_images": len(train_loader.dataset),
@@ -401,6 +407,7 @@ def parse_args():
     parser.add_argument("--freeze-backbone", action="store_true")
     parser.add_argument("--disable-amp", action="store_true")
     parser.add_argument("--no-pretrained", action="store_true")
+    parser.add_argument("--model-name", type=str, default=MODEL_NAME, help="Model backbone to train.")
     parser.add_argument("--model-name-suffix", type=str, default="15class", help="Suffix for checkpoint files.")
     parser.add_argument("--output-dir", type=str, default=None, help="Directory to save training logs and graphs.")
     return parser.parse_args()

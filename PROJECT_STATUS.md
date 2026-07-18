@@ -1,10 +1,10 @@
 # Project Status
 
-Generated: 2026-07-18 11:10:00
+Generated: 2026-07-18 12:09:00
 
 ## Current Phase
 
-Phase 2A (EfficientNet-B0 15-class training) is completed. Phase 2B (Swin Transformer training) is the next pending task.
+Phase 2 (Model Training & Evaluation) is completed. Phase 3 (Deployment, Streamlit improvements, Grad-CAM visualization, and optional model selection) has not been started.
 
 ## Completed
 
@@ -15,6 +15,7 @@ Phase 2A (EfficientNet-B0 15-class training) is completed. Phase 2B (Swin Transf
 - Corrupted image detection now reports files without deleting them.
 - PyTorch DataLoader and Albumentations transforms were verified.
 - Phase 2A: Retrained EfficientNet-B0 on the 15-class dataset on GPU (93.79% test accuracy).
+- Phase 2B: Trained Swin Transformer on the 15-class dataset on GPU (93.56% test accuracy).
 
 ## Current Dataset
 

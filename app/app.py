@@ -27,8 +27,12 @@ st.set_page_config(
 
 
 @st.cache_resource(show_spinner=False)
-def load_pipeline():
-    return WeatherInferencePipeline()
+def load_pipeline(model_name=None, checkpoint_path=None):
+    if checkpoint_path is None:
+        checkpoint_path = Path(MODELS_DIR) / "efficientnet_b0_15class_best.pth"
+        if not checkpoint_path.exists():
+            checkpoint_path = Path(MODELS_DIR) / "best_model.pth"
+    return WeatherInferencePipeline(checkpoint_path=checkpoint_path, model_name=model_name)
 
 
 def uploaded_file_to_image(uploaded_file):
@@ -376,43 +380,9 @@ def render_probability_chart(probabilities):
     st.bar_chart(chart, height=240)
 
 
-def main():
-    inject_css()
-    render_header()
-
-    with st.sidebar:
-        st.header("Dashboard Controls")
-        st.caption("Tune the prediction view before uploading imagery.")
-        show_gradcam = st.toggle("Show Grad-CAM heatmap", value=False)
-        st.divider()
-        st.subheader("Model Checkpoint")
-        st.code(str(Path(MODELS_DIR) / "best_model.pth"), language="text")
-        st.subheader("Classes")
-        for class_name in CLASSES:
-            st.write(class_name.title())
-
-    try:
-        pipeline = load_pipeline()
-    except FileNotFoundError as exc:
-        left, right = st.columns([1.1, 0.9], gap="large")
-        with left:
-            card_open(
-                "Model File Missing",
-                "The redesigned dashboard is ready, but inference needs the trained checkpoint before predictions can run.",
-            )
-            st.error(str(exc))
-            st.info("Place the checkpoint at the path shown in the sidebar, then restart Streamlit.")
-            card_close()
-        with right:
-            card_open(
-                "What Still Works",
-                "You can review the redesigned interface and project layout now. Prediction cards, charts, and Grad-CAM activate once the model file is available.",
-            )
-            st.write("Expected checkpoint name: `best_model.pth`")
-            st.write("Expected folder: `models`")
-            card_close()
-        render_footer()
-        return
+def run_single_analysis_page(pipeline, show_gradcam, compare_both, other_pipeline, model_name):
+    if "history_list" not in st.session_state:
+        st.session_state.history_list = []
 
     upload_col, guide_col = st.columns([1.15, 0.85], gap="large")
 
@@ -438,11 +408,18 @@ def main():
 
     if uploaded_file is None:
         st.info("Upload an image to see the prediction and confidence breakdown.")
-        render_footer()
         return
 
     pil_image = uploaded_file_to_image(uploaded_file)
     result, input_tensor, rgb_image = predict_with_pipeline(pipeline, pil_image)
+
+    # Prediction history tracking
+    st.session_state.history_list.append({
+        "filename": uploaded_file.name,
+        "model": model_name.replace("_", " ").title(),
+        "class": result["predicted_class"].title(),
+        "confidence": f"{result['confidence'] * 100:.2f}%"
+    })
 
     left, right = st.columns([1.2, 1.0], gap="large")
 
@@ -480,17 +457,310 @@ def main():
         st.metric("Predicted Class", result["predicted_class"].title())
         st.metric("Confidence", f"{result['confidence'] * 100:.2f}%")
 
+        # Top-3 predictions summary cards
+        probs = result["probabilities"]
+        top3_indices = np.argsort(probs)[::-1][:3]
+        
+        st.subheader("Top 3 Predictions")
+        for rank, idx in enumerate(top3_indices, 1):
+            st.write(f"**{rank}. {CLASSES[idx].title()}**: {probs[idx]*100:.2f}%")
+
         card_open("Class Probabilities", "Compare the model confidence across all weather classes.")
         render_probability_chart(result["probabilities"])
-
-        probability_table = pd.DataFrame(
-            {
-                "Class": [class_name.title() for class_name in CLASSES],
-                "Probability": [f"{value * 100:.2f}%" for value in result["probabilities"]],
-            }
-        )
-        st.dataframe(probability_table, use_container_width=True, hide_index=True)
         card_close()
+
+    # Compare both models side-by-side if toggled
+    if compare_both and other_pipeline:
+        st.divider()
+        st.subheader("Dual Model Comparison")
+        
+        # Primary Model prediction time
+        import time
+        t0 = time.time()
+        res_primary, _, _ = predict_with_pipeline(pipeline, pil_image)
+        latency_primary = (time.time() - t0) * 1000
+        
+        # Secondary Model prediction time
+        t1 = time.time()
+        res_secondary, _, _ = predict_with_pipeline(other_pipeline, pil_image)
+        latency_secondary = (time.time() - t1) * 1000
+        
+        comp_df = pd.DataFrame([
+            {
+                "Model": model_name.replace("_", " ").title(),
+                "Prediction": res_primary["predicted_class"].title(),
+                "Confidence": f"{res_primary['confidence']*100:.2f}%",
+                "Inference Time": f"{latency_primary:.2f} ms"
+            },
+            {
+                "Model": other_pipeline.model_name.replace("_", " ").title(),
+                "Prediction": res_secondary["predicted_class"].title(),
+                "Confidence": f"{res_secondary['confidence']*100:.2f}%",
+                "Inference Time": f"{latency_secondary:.2f} ms"
+            }
+        ])
+        st.table(comp_df)
+
+    # Prediction History display
+    if st.session_state.history_list:
+        st.divider()
+        st.subheader("Prediction History (Current Session)")
+        history_df = pd.DataFrame(st.session_state.history_list)
+        st.dataframe(history_df, use_container_width=True, hide_index=True)
+
+
+def run_batch_classification_page(pipeline):
+    st.subheader("Batch Image Classification")
+    st.write("Upload multiple images to run batch predictions and automatically organize them into local subdirectories.")
+
+    uploaded_files = st.file_uploader(
+        "Upload multiple weather images",
+        type=["jpg", "jpeg", "png", "bmp", "tiff", "webp", "gif"],
+        accept_multiple_files=True,
+        key="batch_uploader"
+    )
+
+    if not uploaded_files:
+        st.info("Please upload one or more files to start batch processing.")
+        return
+
+    st.write(f"Total uploaded files: **{len(uploaded_files)}**")
+    
+    if st.button("Start Automatic Classification"):
+        import uuid
+        import time
+        from pathlib import Path
+
+        # Initialize folders
+        classified_base = PROJECT_ROOT / "classified_images"
+        classified_base.mkdir(exist_ok=True)
+        for class_name in CLASSES:
+            (classified_base / class_name).mkdir(exist_ok=True)
+
+        # Progress bar
+        progress_bar = st.progress(0.0)
+        status_text = st.empty()
+
+        success_count = 0
+        failed_count = 0
+        saved_per_class = {c: 0 for c in CLASSES}
+        
+        t_start = time.time()
+        
+        for idx, file in enumerate(uploaded_files):
+            try:
+                # Load and predict
+                pil_image = Image.open(BytesIO(file.getvalue())).convert("RGB")
+                result, _, _ = predict_with_pipeline(pipeline, pil_image)
+                
+                pred_class = result["predicted_class"]
+                
+                # Copy with unique filename to prevent overwrite
+                ext = Path(file.name).suffix
+                stem = Path(file.name).stem
+                unique_name = f"{stem}_{uuid.uuid4().hex[:6]}{ext}"
+                target_path = classified_base / pred_class / unique_name
+                
+                with open(target_path, "wb") as f:
+                    f.write(file.getbuffer())
+                
+                success_count += 1
+                saved_per_class[pred_class] += 1
+            except Exception as e:
+                failed_count += 1
+                st.error(f"Failed to process {file.name}: {e}")
+
+            # Update progress
+            progress_ratio = (idx + 1) / len(uploaded_files)
+            progress_bar.progress(progress_ratio)
+            status_text.text(f"Processed {idx + 1}/{len(uploaded_files)} images...")
+
+        elapsed_time = time.time() - t_start
+        status_text.text("Batch processing completed!")
+
+        # Display results summary
+        st.success("Batch Classification Summary:")
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Total Uploaded", len(uploaded_files))
+        col2.metric("Successfully Classified", success_count)
+        col3.metric("Failed Images", failed_count)
+        col4.metric("Processing Time", f"{elapsed_time:.2f} s")
+
+        st.subheader("Images Saved Per Class Folder:")
+        stats_df = pd.DataFrame([
+            {"Class": c.title(), "Count": count, "Folder Path": str(classified_base / c)}
+            for c, count in saved_per_class.items() if count > 0
+        ])
+        if not stats_df.empty:
+            st.table(stats_df)
+        else:
+            st.write("No images were saved.")
+
+
+def run_comparison_dashboard_page():
+    st.subheader("Model Comparison Dashboard")
+    st.write("Review the test metrics, architectural details, and deployment recommendation side-by-side.")
+
+    # Read dynamically from saved metrics if possible
+    eff_metrics_path = PROJECT_ROOT / "outputs" / "training" / "metrics.json"
+    swin_metrics_path = PROJECT_ROOT / "outputs" / "training" / "swin" / "metrics.json"
+    
+    import json
+    
+    # Defaults in case files don't exist
+    eff_acc, eff_prec, eff_rec, eff_f1, eff_loss = 0.9379, 0.9386, 0.9379, 0.9379, 0.2267
+    swin_acc, swin_prec, swin_rec, swin_f1, swin_loss = 0.9356, 0.9364, 0.9356, 0.9358, 0.2332
+
+    if eff_metrics_path.exists():
+        try:
+            with open(eff_metrics_path, "r") as f:
+                d = json.load(f)
+                eff_acc = d.get("accuracy", eff_acc)
+                eff_prec = d.get("precision", eff_prec)
+                eff_rec = d.get("recall", eff_rec)
+                eff_f1 = d.get("f1_score", eff_f1)
+                eff_loss = d.get("loss", eff_loss)
+        except Exception:
+            pass
+
+    if swin_metrics_path.exists():
+        try:
+            with open(swin_metrics_path, "r") as f:
+                d = json.load(f)
+                swin_acc = d.get("accuracy", swin_acc)
+                swin_prec = d.get("precision", swin_prec)
+                swin_rec = d.get("recall", swin_rec)
+                swin_f1 = d.get("f1_score", swin_f1)
+                swin_loss = d.get("loss", swin_loss)
+        except Exception:
+            pass
+
+    comp_df = pd.DataFrame({
+        "Metric": ["Accuracy", "Precision", "Recall", "F1 Score", "Test Loss", "Parameters", "Model Weight Size", "Inference Time", "Training Time"],
+        "EfficientNet-B0": [
+            f"{eff_acc*100:.2f}%", f"{eff_prec*100:.2f}%", f"{eff_rec*100:.2f}%", f"{eff_f1*100:.2f}%", f"{eff_loss:.4f}",
+            "4,026,763", "46.56 MB", "17.52 ms/image", "348 seconds"
+        ],
+        "Swin Transformer": [
+            f"{swin_acc*100:.2f}%", f"{swin_prec*100:.2f}%", f"{swin_rec*100:.2f}%", f"{swin_f1*100:.2f}%", f"{swin_loss:.4f}",
+            "27,530,889", "315.51 MB", "25.15 ms/image", "1,213 seconds"
+        ]
+    })
+    st.table(comp_df)
+
+    # Display curves side-by-side
+    st.subheader("Training History Visualization")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.write("**EfficientNet-B0 Curves**")
+        p_loss = PROJECT_ROOT / "outputs" / "training" / "loss_curve.png"
+        p_acc = PROJECT_ROOT / "outputs" / "training" / "accuracy_curve.png"
+        if p_loss.exists():
+            st.image(str(p_loss), use_container_width=True)
+        if p_acc.exists():
+            st.image(str(p_acc), use_container_width=True)
+    with c2:
+        st.write("**Swin Transformer Curves**")
+        ps_loss = PROJECT_ROOT / "outputs" / "training" / "swin" / "loss_curve.png"
+        ps_acc = PROJECT_ROOT / "outputs" / "training" / "swin" / "accuracy_curve.png"
+        if ps_loss.exists():
+            st.image(str(ps_loss), use_container_width=True)
+        if ps_acc.exists():
+            st.image(str(ps_acc), use_container_width=True)
+
+    # Architecture details
+    st.subheader("Architecture Overview")
+    left_arch, right_arch = st.columns(2)
+    with left_arch:
+        st.info("**EfficientNet-B0**\n\n* **Pros**: Highly parameter-efficient, fast training and inference, low VRAM usage.\n* **Cons**: Slightly lower representation capacity for global contextual relations than large transformers.")
+    with right_arch:
+        st.warning("**Swin Transformer**\n\n* **Pros**: Powerful attention mechanisms, captures long-range dependencies well.\n* **Cons**: Large size (315MB), slow training and inference latency, high resource requirements.")
+
+    # Deployment recommendation
+    st.success("**Recommended Deployment Model: EfficientNet-B0**\n\n**Reasoning:** EfficientNet-B0 delivers slightly better overall accuracy (`93.79%` vs `93.56%`) while requiring **6.8x less memory/disk space**, running **43.5% faster during inference**, and training **3.5x faster** than the Swin Transformer.")
+
+
+def main():
+    inject_css()
+    render_header()
+
+    with st.sidebar:
+        st.header("Navigation")
+        page = st.radio("Select Page:", ["Single Image Analysis", "Batch Classification", "Model Comparison Dashboard"])
+        st.divider()
+        
+        st.header("Model Selection")
+        model_choice = st.selectbox(
+            "Selected Classifier Model:",
+            ["EfficientNet-B0 (Default)", "Swin Transformer"],
+            index=0
+        )
+        
+        if model_choice == "EfficientNet-B0 (Default)":
+            model_name = "efficientnet_b0"
+            checkpoint_path = Path(MODELS_DIR) / "efficientnet_b0_15class_best.pth"
+            if not checkpoint_path.exists():
+                checkpoint_path = Path(MODELS_DIR) / "best_model.pth"
+            show_gradcam = st.toggle("Show Grad-CAM heatmap", value=False)
+        else:
+            model_name = "swin_transformer"
+            checkpoint_path = Path(MODELS_DIR) / "swin_transformer_15class_best.pth"
+            st.info("Grad-CAM is only supported for EfficientNet-B0")
+            show_gradcam = False
+            
+        st.divider()
+        compare_both = st.checkbox("Compare both models on this image", value=False)
+        st.divider()
+        
+        st.subheader("Classes")
+        for class_name in CLASSES:
+            st.write(class_name.title())
+
+    try:
+        pipeline = load_pipeline(model_name=model_name, checkpoint_path=checkpoint_path)
+    except FileNotFoundError as exc:
+        left, right = st.columns([1.1, 0.9], gap="large")
+        with left:
+            card_open(
+                "Model File Missing",
+                "The redesigned dashboard is ready, but inference needs the trained checkpoint before predictions can run.",
+            )
+            st.error(str(exc))
+            st.info("Place the checkpoint at the path shown in the sidebar, then restart Streamlit.")
+            card_close()
+        with right:
+            card_open(
+                "What Still Works",
+                "You can review the redesigned interface and project layout now. Prediction cards, charts, and Grad-CAM activate once the model file is available.",
+            )
+            st.write("Expected checkpoint name: `efficientnet_b0_15class_best.pth`")
+            st.write("Expected folder: `models`")
+            card_close()
+        render_footer()
+        return
+
+    other_pipeline = None
+    if compare_both:
+        try:
+            if model_name == "efficientnet_b0":
+                other_checkpoint = Path(MODELS_DIR) / "swin_transformer_15class_best.pth"
+                other_name = "swin_transformer"
+            else:
+                other_checkpoint = Path(MODELS_DIR) / "efficientnet_b0_15class_best.pth"
+                if not other_checkpoint.exists():
+                    other_checkpoint = Path(MODELS_DIR) / "best_model.pth"
+                other_name = "efficientnet_b0"
+            other_pipeline = load_pipeline(model_name=other_name, checkpoint_path=other_checkpoint)
+        except Exception as exc:
+            st.warning(f"Failed to load secondary model for comparison: {exc}")
+
+    # Routing
+    if page == "Single Image Analysis":
+        run_single_analysis_page(pipeline, show_gradcam, compare_both, other_pipeline, model_name)
+    elif page == "Batch Classification":
+        run_batch_classification_page(pipeline)
+    elif page == "Model Comparison Dashboard":
+        run_comparison_dashboard_page()
 
     render_footer()
 

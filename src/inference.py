@@ -25,8 +25,9 @@ class WeatherInferencePipeline:
     Uses the same resize/normalization pipeline as validation/testing.
     """
 
-    def __init__(self, checkpoint_path=DEFAULT_CHECKPOINT_PATH, device=None):
+    def __init__(self, checkpoint_path=DEFAULT_CHECKPOINT_PATH, model_name=None, device=None):
         self.checkpoint_path = Path(checkpoint_path)
+        self.model_name = model_name or MODEL_NAME
         self.device = device or torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self._load_model()
         _, self.transform = get_transforms(img_size=IMAGE_SIZE, mean=NORM_MEAN, std=NORM_STD)
@@ -35,7 +36,7 @@ class WeatherInferencePipeline:
         if not self.checkpoint_path.exists():
             raise FileNotFoundError(f"Model checkpoint not found: {self.checkpoint_path}")
 
-        model = build_model(model_name=MODEL_NAME, num_classes=NUM_CLASSES, pretrained=False)
+        model = build_model(model_name=self.model_name, num_classes=NUM_CLASSES, pretrained=False)
         checkpoint = torch.load(self.checkpoint_path, map_location=self.device)
         state_dict = checkpoint.get("model_state_dict", checkpoint)
         model.load_state_dict(state_dict)

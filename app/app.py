@@ -9,12 +9,14 @@ from PIL import Image
 import streamlit as st
 import torch
 
+from huggingface_hub import hf_hub_download
+
 CURRENT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_DIR.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.config import CLASSES, IMAGE_SIZE, MODELS_DIR
+from src.config import CLASSES, IMAGE_SIZE
 from src.inference import WeatherInferencePipeline
 
 
@@ -27,11 +29,15 @@ st.set_page_config(
 
 
 @st.cache_resource(show_spinner=False)
-def load_pipeline(model_name=None, checkpoint_path=None):
-    if checkpoint_path is None:
-        checkpoint_path = Path(MODELS_DIR) / "efficientnet_b0_15class_best.pth"
-        if not checkpoint_path.exists():
-            checkpoint_path = Path(MODELS_DIR) / "best_model.pth"
+def load_pipeline(model_name=None, checkpoint_filename=None):
+    if checkpoint_filename is None:
+        checkpoint_filename = "efficientnet_b0_15class_best.pth"
+
+    checkpoint_path = hf_hub_download(
+        repo_id="arpitsain05/ai-cloud-detection-model",
+        filename=checkpoint_filename,
+        repo_type="model",
+    )
     return WeatherInferencePipeline(checkpoint_path=checkpoint_path, model_name=model_name)
 
 
@@ -698,13 +704,11 @@ def main():
         
         if model_choice == "EfficientNet-B0 (Default)":
             model_name = "efficientnet_b0"
-            checkpoint_path = Path(MODELS_DIR) / "efficientnet_b0_15class_best.pth"
-            if not checkpoint_path.exists():
-                checkpoint_path = Path(MODELS_DIR) / "best_model.pth"
+            checkpoint_filename = "efficientnet_b0_15class_best.pth"
             show_gradcam = st.toggle("Show Grad-CAM heatmap", value=False)
         else:
             model_name = "swin_transformer"
-            checkpoint_path = Path(MODELS_DIR) / "swin_transformer_15class_best.pth"
+            checkpoint_filename = "swin_transformer_15class_best.pth"
             st.info("Grad-CAM is only supported for EfficientNet-B0")
             show_gradcam = False
             
@@ -717,24 +721,24 @@ def main():
             st.write(class_name.title())
 
     try:
-        pipeline = load_pipeline(model_name=model_name, checkpoint_path=checkpoint_path)
-    except FileNotFoundError as exc:
+        pipeline = load_pipeline(model_name=model_name, checkpoint_filename=checkpoint_filename)
+    except Exception as exc:
         left, right = st.columns([1.1, 0.9], gap="large")
         with left:
             card_open(
-                "Model File Missing",
-                "The redesigned dashboard is ready, but inference needs the trained checkpoint before predictions can run.",
+                "Model Download Failed",
+                "Unable to download or load model weights from Hugging Face Model Hub.",
             )
             st.error(str(exc))
-            st.info("Place the checkpoint at the path shown in the sidebar, then restart Streamlit.")
+            st.info("Check your internet connection or verify the repository `arpitsain05/ai-cloud-detection-model` on Hugging Face.")
             card_close()
         with right:
             card_open(
                 "What Still Works",
-                "You can review the redesigned interface and project layout now. Prediction cards, charts, and Grad-CAM activate once the model file is available.",
+                "You can review the interface and project layout now. Prediction cards, charts, and Grad-CAM activate once the Hugging Face model download succeeds.",
             )
-            st.write("Expected checkpoint name: `efficientnet_b0_15class_best.pth`")
-            st.write("Expected folder: `models`")
+            st.write("Repository: `arpitsain05/ai-cloud-detection-model`")
+            st.write(f"Checkpoint: `{checkpoint_filename}`")
             card_close()
         render_footer()
         return
@@ -743,16 +747,14 @@ def main():
     if compare_both:
         try:
             if model_name == "efficientnet_b0":
-                other_checkpoint = Path(MODELS_DIR) / "swin_transformer_15class_best.pth"
+                other_filename = "swin_transformer_15class_best.pth"
                 other_name = "swin_transformer"
             else:
-                other_checkpoint = Path(MODELS_DIR) / "efficientnet_b0_15class_best.pth"
-                if not other_checkpoint.exists():
-                    other_checkpoint = Path(MODELS_DIR) / "best_model.pth"
+                other_filename = "efficientnet_b0_15class_best.pth"
                 other_name = "efficientnet_b0"
-            other_pipeline = load_pipeline(model_name=other_name, checkpoint_path=other_checkpoint)
+            other_pipeline = load_pipeline(model_name=other_name, checkpoint_filename=other_filename)
         except Exception as exc:
-            st.warning(f"Failed to load secondary model for comparison: {exc}")
+            st.warning(f"Failed to load secondary model for comparison from Hugging Face: {exc}")
 
     # Routing
     if page == "Single Image Analysis":
